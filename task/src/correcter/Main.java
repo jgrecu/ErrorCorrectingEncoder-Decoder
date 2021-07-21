@@ -8,35 +8,13 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         String input = scanner.nextLine();
         String encodedMessage = encodeMessage(input);
-        String receivedMessage = errorEmulator(encodedMessage);
-        String decodedMessage = decodeMessage(receivedMessage);
+        String scrambledMessage = errorEmulator(encodedMessage);
+        String decodedMessage = decodeMessage(scrambledMessage);
         System.out.println(input);
         System.out.println(encodedMessage);
-        System.out.println(receivedMessage);
+        System.out.println(scrambledMessage);
         System.out.println(decodedMessage);
     }
-
-//    public static String errorEmulator(String string) {
-//        StringBuilder sb = new StringBuilder();
-//        Random r = new Random(3);
-//        final String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-//
-//        char[] input = string.toCharArray();
-//        int N = chars.length();
-//        for(int i = 2; i < input.length; i += 3) {
-//            char replace = chars.charAt(r.nextInt(N));
-//            if (input[i] == replace) {
-//                i -=3;
-//            } else {
-//                input[i] = chars.charAt(r.nextInt(N));
-//            }
-//
-//        }
-//        for (char c : input) {
-//            sb.append(c);
-//        }
-//        return sb.toString();
-//    }
 
     public static String errorEmulator(String string) {
         StringBuilder sb = new StringBuilder(string);
