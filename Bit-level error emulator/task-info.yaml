@@ -163,6 +163,18 @@ files:
         }
     }
   learner_created: false
+- name: src/correcter/send.txt
+  visible: true
+  learner_created: true
+- name: src/correcter/received.txt
+  visible: true
+  learner_created: true
+- name: received.txt
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/58/stages/314/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Fri, 23 Jul 2021 09:32:20 UTC
 record: -1

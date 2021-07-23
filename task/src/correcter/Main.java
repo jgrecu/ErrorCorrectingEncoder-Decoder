@@ -1,31 +1,49 @@
 package correcter;
 
+import java.io.*;
 import java.util.Random;
-import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
-        String encodedMessage = encodeMessage(input);
-        String scrambledMessage = errorEmulator(encodedMessage);
-        String decodedMessage = decodeMessage(scrambledMessage);
-        System.out.println(input);
-        System.out.println(encodedMessage);
-        System.out.println(scrambledMessage);
-        System.out.println(decodedMessage);
+//        Scanner scanner = new Scanner(System.in);
+//        String input = scanner.nextLine();
+//        String encodedMessage = encodeMessage(input);
+//        String scrambledMessage = errorEmulator(encodedMessage);
+//        String decodedMessage = decodeMessage(scrambledMessage);
+//        System.out.println(input);
+//        System.out.println(encodedMessage);
+//        System.out.println(scrambledMessage);
+//        System.out.println(decodedMessage);
+        errorEmulator();
     }
 
-    public static String errorEmulator(String string) {
-        StringBuilder sb = new StringBuilder(string);
-        Random r = new Random(3);
-        int size = string.length();
-        String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        for (int i = 0; i < size - 2; i += 3) {
-            int rand1 = r.nextInt(3);
-            sb.replace(i + rand1, i + rand1 + 1, String.valueOf(chars.charAt(r.nextInt(chars.length()))));
+//    public static String errorEmulator(String string) {
+//        StringBuilder sb = new StringBuilder(string);
+//        Random r = new Random(3);
+//        int size = string.length();
+//        String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+//        for (int i = 0; i < size - 2; i += 3) {
+//            int rand1 = r.nextInt(3);
+//            sb.replace(i + rand1, i + rand1 + 1, String.valueOf(chars.charAt(r.nextInt(chars.length()))));
+//        }
+//        return sb.toString();
+//    }
+
+    public static void errorEmulator() {
+        Random r = new Random(7);
+        try (
+                InputStream inputStream = new FileInputStream("send.txt");
+                OutputStream outputStream = new FileOutputStream("received.txt");
+        ) {
+            int byteRead;
+            while ((byteRead = inputStream.read()) != -1) {
+                byteRead ^= 1 << r.nextInt(8);
+                outputStream.write(byteRead);
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
-        return sb.toString();
     }
 
     public static String encodeMessage(String string) {
