@@ -30,7 +30,7 @@ public class Main {
 //    }
 
     public static void errorEmulator() {
-        Random r = new Random(7);
+        Random r = new Random(8);
         try (
                 InputStream inputStream = new FileInputStream("send.txt");
                 OutputStream outputStream = new FileOutputStream("received.txt");
@@ -41,8 +41,8 @@ public class Main {
                 outputStream.write(byteRead);
             }
 
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
