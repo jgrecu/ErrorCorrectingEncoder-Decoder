@@ -121,8 +121,9 @@ public class Main {
     public static byte decodeBytes(byte input) {
         int xor = 0;
         for (int i = 0; i < 3; i++) {
-            if (getBit(input, i * 2) == getBit(input, i * 2 + 1))
+            if (getBit(input, i * 2) == getBit(input, i * 2 + 1)) {
                 xor ^= getBit(input, i * 2);
+            }
         }
 
         for (int j = 0; j < 3; ++j) {
