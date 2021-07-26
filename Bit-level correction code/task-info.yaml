@@ -343,13 +343,6 @@ files:
     }
 
   learner_created: false
-- name: src/correcter/received.txt
-  visible: true
-  text: sIMqhm�TEhp�
-  learner_created: true
-- name: src/correcter/send.txt
-  visible: true
-  learner_created: true
 - name: encoded.txt
   visible: true
   learner_created: true
@@ -364,4 +357,4 @@ status: Solved
 feedback:
   message: Congratulations!
   time: Sun, 25 Jul 2021 09:26:41 UTC
-record: -1
+record: 4
