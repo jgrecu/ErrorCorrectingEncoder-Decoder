@@ -42,6 +42,9 @@ public class Main {
     }
 
     public static byte stringToByte(String s) {
+        /*
+        Hamming error-correction code: https://youtu.be/373FUw-2U2k
+         */
         StringBuilder sb = new StringBuilder();
         String[] tempBits = s.split("");
         int[] bits = new int[8];
@@ -55,10 +58,13 @@ public class Main {
         for (int i : bits) {
             sb.append(i);
         }
-        return (byte) Integer.parseInt(sb.toString(), 2);
+        return (byte) (Integer.parseInt(sb.toString(), 2) >> 1);  //?
     }
 
-    public static byte[] processByte(byte b) {
+    public static byte[] encodeSplitByte(byte b) {
+        /*
+        This splits every byte into 4 bits to process in Hamming error-correction code
+         */
         byte[] temp = new byte[2];
         String binaryByte = String.format("%8s", Integer.toBinaryString(b)).replace(' ', '0');
         String firstHalf = binaryByte.substring(0, 4);
@@ -73,7 +79,7 @@ public class Main {
         File file = new File("send.txt");
 
         int numBytes = (int) file.length();
-        int numBits = numBytes * 8;
+        //int numBits = numBytes * 8;
         //int numOutBytes = numBits / 3 + (numBits % 3 == 0 ? 0 : 1);
         int numOutBytes = numBytes * 2;
 
@@ -109,13 +115,13 @@ public class Main {
 //            }
 //            out_data[i] = 0;
 //        }
-        for (int i = 0; i < numBytes; i++) {
-            byte currentByte = in_data[i];
-            byte[] temp = processByte(currentByte);
-            for (int j = 0; j < 2; j++) {
-                out_data[i + j] = temp[j];
-            }
+        for (int i = 0; i < numOutBytes; i += 2) {
+            byte currentByte = in_data[i / 2];
+            byte[] temp = encodeSplitByte(currentByte);
+            out_data[i] = temp[0];
+            out_data[i + 1] = temp[1];
         }
+
         for (var i : out_data) {
             System.out.print(i + " ");
         }
@@ -155,32 +161,85 @@ public class Main {
         }
     }
 
-    public static byte decodeBytes(byte input) {
-        int xor = 0;
-        for (int i = 0; i < 3; i++) {
-            if (getBit(input, i * 2) == getBit(input, i * 2 + 1)) {
-                xor ^= getBit(input, i * 2);
-            }
+//    public static byte decodeBytes(byte input) {
+//        int xor = 0;
+//        for (int i = 0; i < 3; i++) {
+//            if (getBit(input, i * 2) == getBit(input, i * 2 + 1)) {
+//                xor ^= getBit(input, i * 2);
+//            }
+//        }
+//
+//        for (int j = 0; j < 3; ++j) {
+//            if (getBit(input, j * 2) != getBit(input, j * 2 + 1)) {
+//                input = setBit(input, xor ^ getBit(input, 6), j * 2);
+//                input = setBit(input, xor ^ getBit(input, 6), j * 2 + 1);
+//                return input;
+//            }
+//        }
+//
+//        input = setBit(input, xor , 6);
+//        input = setBit(input, xor , 7);
+//
+//        return input;
+//    }
+
+    public static String byteToString(byte b) {
+        /*
+        Hamming error-correction code: https://youtu.be/373FUw-2U2k , find the wrong bit
+         */
+        StringBuilder sb = new StringBuilder();
+        String binaryByte = String.format("%8s", Integer.toBinaryString(b)).replace(' ', '0');
+        String[] tempBits = binaryByte.split("");
+        int[] bits = new int[8];
+
+        for (int i = 0; i < 8; i++) {
+            bits[i] = Integer.parseInt(tempBits[i]);
         }
 
-        for (int j = 0; j < 3; ++j) {
-            if (getBit(input, j * 2) != getBit(input, j * 2 + 1)) {
-                input = setBit(input, xor ^ getBit(input, 6), j * 2);
-                input = setBit(input, xor ^ getBit(input, 6), j * 2 + 1);
-                return input;
-            }
+        int bit1 = bits[0];
+        int bit2 = bits[1];
+        int bit4 = bits[3];
+
+        int tempBit1 = (bits[2] + bits[4] + bits[6]) % 2 == 0 ? 0 : 1;
+        int tempBit2 = (bits[2] + bits[5] + bits[6]) % 2 == 0 ? 0 : 1;
+        int tempBit4 = (bits[4] + bits[5] + bits[6]) % 2 == 0 ? 0 : 1;
+        if (tempBit1 != bit1 && tempBit2 != bit2 && tempBit4 != bit4) {
+            bits[6] = bits[6] == 0 ? 1 : 0;
+        } else if (tempBit2 != bit2 && tempBit4 != bit4) {
+            bits[5] = bits[5] == 0 ? 1 : 0;
+        } else if (tempBit1 != bit1 && tempBit4 != bit4) {
+            bits[4] = bits[4] == 0 ? 1 : 0;
+        } else if (tempBit1 != bit1 && tempBit2 != bit2) {
+            bits[2] = bits[2] == 0 ? 1 : 0;
+        } else if (tempBit2 != bit2) {
+            bits[1] = bits[1] == 0 ? 1 : 0;
+        } else if (tempBit1 != bit1) {
+            bits[0] = bits[0] == 0 ? 1 : 0;
+        } else {
+            bits[7] = 0;
         }
 
-        input = setBit(input, xor , 6);
-        input = setBit(input, xor , 7);
+        sb.append(bits[2]);
+        sb.append(bits[4]);
+        sb.append(bits[5]);
+        sb.append(bits[6]);
 
+        return sb.toString();
+    }
+
+    public static byte decodeBytes(byte b1, byte b2) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(byteToString(b1));
+        sb.append(byteToString(b2));
+        byte input = (byte) Integer.parseInt(sb.toString(), 2);
         return input;
     }
 
     public static void decode() {
         File file = new File("received.txt");
         int numBytes = (int) file.length();
-        int numOutBytes = (numBytes * 3) / 8;
+        //int numOutBytes = (numBytes * 3) / 8;
+        int numOutBytes = numBytes / 2;
         byte[] data = new byte[numBytes];
         byte[] out_data = new byte[numOutBytes];
 
@@ -190,17 +249,21 @@ public class Main {
             e.printStackTrace();
         }
 
-        for (int i = 0; i < data.length; ++i) {
-            data[i] = decodeBytes(data[i]);
-            for (int j = 0; j < 3; j++) {
-                int bitIndex = i * 3 + j;
-                int byteIndex = bitIndex / 8;
-                int bytePos = bitIndex % 8;
-                int bit = getBit(data[i], j * 2);
-                if (byteIndex < numOutBytes) {
-                    out_data[byteIndex] = setBit(out_data[byteIndex], bit, bytePos);
-                }
-            }
+//        for (int i = 0; i < data.length; ++i) {
+//            data[i] = decodeBytes(data[i]);
+//            for (int j = 0; j < 3; j++) {
+//                int bitIndex = i * 3 + j;
+//                int byteIndex = bitIndex / 8;
+//                int bytePos = bitIndex % 8;
+//                int bit = getBit(data[i], j * 2);
+//                if (byteIndex < numOutBytes) {
+//                    out_data[byteIndex] = setBit(out_data[byteIndex], bit, bytePos);
+//                }
+//            }
+//        }
+
+        for (int i = 0; i < data.length; i += 2) {
+            out_data[i / 2] = decodeBytes(data[i],data[i + 1]);
         }
 
         for (var i : out_data) {
