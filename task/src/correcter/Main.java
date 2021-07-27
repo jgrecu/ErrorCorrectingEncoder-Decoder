@@ -25,62 +25,42 @@ public class Main {
             default:
                 break;
         }
+        scanner.close();
     }
 
-    public static int getBit(byte b, int index) {
-        return (b & (1 << (7 - index))) == 0 ? 0 : 1;
+
+    private static int getBitAt(byte b, int index) {
+        int shift = 7 - index;
+        return (b & (1 << shift)) >> shift;
     }
 
-    public static byte setBit(byte b, int bit, int index) {
-        if (bit == 0) {
-            if (getBit(b, index) == 0) {
-                b = (byte) (b ^ (1 << (7 - index)));
-            }
-            return (byte) (b ^ (1 << (7 - index)));
+    private static byte setBitAt(byte b, int index, int bit) {
+        if (bit == 1) {
+            return (byte) (b | (1 << (7 - index)));
+        } else {
+            return (byte) (b & ~(1 << (7 - index)));
         }
-        return (byte) (b | (bit << (7 - index)));
     }
 
-    public static byte stringToByte(String s) {
+    private static byte encodeData(final int[] data) {
         /*
-        Hamming error-correction code: https://youtu.be/373FUw-2U2k
+        use 'Hamming code' to encode
          */
-        StringBuilder sb = new StringBuilder();
-        String[] tempBits = s.split("");
-        int[] bits = new int[8];
-        bits[2] = Integer.parseInt(tempBits[0]);
-        bits[4] = Integer.parseInt(tempBits[1]);
-        bits[5] = Integer.parseInt(tempBits[2]);
-        bits[6] = Integer.parseInt(tempBits[3]);
-        bits[0] = (bits[2] + bits[4] + bits[6]) % 2 == 0 ? 0 : 1;
-        bits[1] = (bits[2] + bits[5] + bits[6]) % 2 == 0 ? 0 : 1;
-        bits[3] = (bits[4] + bits[5] + bits[6]) % 2 == 0 ? 0 : 1;
-        for (int i : bits) {
-            sb.append(i);
-        }
-        return (byte) (Integer.parseInt(sb.toString(), 2) >> 1);  //?
+        byte encodedData = 0;
+        encodedData = setBitAt(encodedData, 0, data[0] ^ data[1] ^ data[3]);
+        encodedData = setBitAt(encodedData, 2 - 1, data[0] ^ data[2] ^ data[3]);
+        encodedData = setBitAt(encodedData, 3 - 1, data[0]);
+        encodedData = setBitAt(encodedData, 4 - 1, data[1] ^ data[2] ^ data[3]);
+        encodedData = setBitAt(encodedData, 5 - 1, data[1]);
+        encodedData = setBitAt(encodedData, 6 - 1, data[2]);
+        encodedData = setBitAt(encodedData, 7 - 1, data[3]);
+        return encodedData;
     }
 
-    public static byte[] encodeSplitByte(byte b) {
-        /*
-        This splits every byte into 4 bits to process in Hamming error-correction code
-         */
-        byte[] temp = new byte[2];
-        String binaryByte = String.format("%8s", Integer.toBinaryString(b)).replace(' ', '0');
-        String firstHalf = binaryByte.substring(0, 4);
-        String secondHalf = binaryByte.substring(4,8);
-        byte firstByte = stringToByte(firstHalf);
-        byte secondByte = stringToByte(secondHalf);
-        temp[0] = firstByte;
-        temp[1] = secondByte;
-        return temp;
-    }
     public static void encode() {
         File file = new File("send.txt");
 
         int numBytes = (int) file.length();
-        //int numBits = numBytes * 8;
-        //int numOutBytes = numBits / 3 + (numBits % 3 == 0 ? 0 : 1);
         int numOutBytes = numBytes * 2;
 
         byte[] in_data = new byte[numBytes];
@@ -96,30 +76,13 @@ public class Main {
             System.out.print(i + " ");
         }
 
-//        for (int i = 0; i < numOutBytes; i++) {
-//            int sum = 0;
-//            out_data[i] = 0;
-//            for (int j = 0; j < 8; j += 2) {
-//                int numBit = i * 7 + j;
-//                int numByte = numBit / 8;
-//                int bytePos = numBit % 8;
-//                int bit;
-//                if (numByte >= in_data.length) {
-//                    bit = 0;
-//                } else {
-//                    bit = getBit(in_data[numByte], bytePos);
-//                }
-//                sum ^= bit;
-//                out_data[i] = setBit(out_data[i], bit, j * 2);
-//                //out_data[i] = setBit(out_data[i], bit, j * 2 + 1);
-//            }
-//            out_data[i] = 0;
-//        }
-        for (int i = 0; i < numOutBytes; i += 2) {
-            byte currentByte = in_data[i / 2];
-            byte[] temp = encodeSplitByte(currentByte);
-            out_data[i] = temp[0];
-            out_data[i + 1] = temp[1];
+        for (int i = 0; i < in_data.length; i++) {
+            for (int j = 0; j < 2; j++) {
+                int[] data = new int[4];
+                for (int k = 0; k < 4; k++)
+                    data[k] = getBitAt(in_data[i], j * 4 + k);
+                out_data[2 * i + j] = encodeData(data);
+            }
         }
 
         for (var i : out_data) {
@@ -137,133 +100,94 @@ public class Main {
         Random r = new Random();
         File file = new File("encoded.txt");
         int numBytes = (int) file.length();
-        byte[] data = new byte[numBytes];
+        byte[] inputData = new byte[numBytes];
+        byte[] outputData = new byte[numBytes];
 
         try (FileInputStream inputStream = new FileInputStream("encoded.txt")) {
-            inputStream.read(data);
+            inputStream.read(inputData);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        for (int i = 0; i < numBytes; ++i) {
-            int pos = r.nextInt(8);
-            data[i] ^= (1 << pos);
+        for (var i : inputData) {
+            System.out.print(i + " ");
         }
 
-        for (var i : data) {
+        for (int i = 0; i < inputData.length; ++i) {
+            int num = 1 << r.nextInt(8);
+            outputData[i] = (byte) (inputData[i] ^ num);
+        }
+
+        for (var i : outputData) {
             System.out.print(i + " ");
         }
 
         try (OutputStream outputStream = new FileOutputStream("received.txt", false)) {
-            outputStream.write(data);
+            outputStream.write(outputData);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-//    public static byte decodeBytes(byte input) {
-//        int xor = 0;
-//        for (int i = 0; i < 3; i++) {
-//            if (getBit(input, i * 2) == getBit(input, i * 2 + 1)) {
-//                xor ^= getBit(input, i * 2);
-//            }
-//        }
-//
-//        for (int j = 0; j < 3; ++j) {
-//            if (getBit(input, j * 2) != getBit(input, j * 2 + 1)) {
-//                input = setBit(input, xor ^ getBit(input, 6), j * 2);
-//                input = setBit(input, xor ^ getBit(input, 6), j * 2 + 1);
-//                return input;
-//            }
-//        }
-//
-//        input = setBit(input, xor , 6);
-//        input = setBit(input, xor , 7);
-//
-//        return input;
-//    }
-
-    public static String byteToString(byte b) {
+    private static int[] decodeData(byte data) {
         /*
-        Hamming error-correction code: https://youtu.be/373FUw-2U2k , find the wrong bit
+        use 'Hamming code' to decode
          */
-        StringBuilder sb = new StringBuilder();
-        String binaryByte = String.format("%8s", Integer.toBinaryString(b)).replace(' ', '0');
-        String[] tempBits = binaryByte.split("");
-        int[] bits = new int[8];
-
-        for (int i = 0; i < 8; i++) {
-            bits[i] = Integer.parseInt(tempBits[i]);
+        int p1 = getBitAt(data, 0);
+        int p2 = getBitAt(data, 2 - 1);
+        int p4 = getBitAt(data, 4 - 1);
+        int a = getBitAt(data, 3 - 1);
+        int b = getBitAt(data, 5 - 1);
+        int c = getBitAt(data, 6 - 1);
+        int d = getBitAt(data, 7 - 1);
+        boolean c1 = (p1 == (a ^ b ^ d));
+        boolean c2 = (p2 == (a ^ c ^ d));
+        boolean c4 = (p4 == (b ^ c ^ d));
+        if (!(c1 && c2 || c2 && c4 || c4 && c1)) {
+            if (c1) {
+                c = shiftInteger(c);
+            } else if (c2) {
+                b = shiftInteger(b);
+            } else if (c4) {
+                a = shiftInteger(a);
+            } else {
+                d = shiftInteger(d);
+            }
         }
-
-        int bit1 = bits[0];
-        int bit2 = bits[1];
-        int bit4 = bits[3];
-
-        int tempBit1 = (bits[2] + bits[4] + bits[6]) % 2 == 0 ? 0 : 1;
-        int tempBit2 = (bits[2] + bits[5] + bits[6]) % 2 == 0 ? 0 : 1;
-        int tempBit4 = (bits[4] + bits[5] + bits[6]) % 2 == 0 ? 0 : 1;
-        if (tempBit1 != bit1 && tempBit2 != bit2 && tempBit4 != bit4) {
-            bits[6] = bits[6] == 0 ? 1 : 0;
-        } else if (tempBit2 != bit2 && tempBit4 != bit4) {
-            bits[5] = bits[5] == 0 ? 1 : 0;
-        } else if (tempBit1 != bit1 && tempBit4 != bit4) {
-            bits[4] = bits[4] == 0 ? 1 : 0;
-        } else if (tempBit1 != bit1 && tempBit2 != bit2) {
-            bits[2] = bits[2] == 0 ? 1 : 0;
-        } else if (tempBit2 != bit2) {
-            bits[1] = bits[1] == 0 ? 1 : 0;
-        } else if (tempBit1 != bit1) {
-            bits[0] = bits[0] == 0 ? 1 : 0;
-        } else {
-            bits[7] = 0;
-        }
-
-        sb.append(bits[2]);
-        sb.append(bits[4]);
-        sb.append(bits[5]);
-        sb.append(bits[6]);
-
-        return sb.toString();
+        return new int[] { a, b, c, d };
     }
 
-    public static byte decodeBytes(byte b1, byte b2) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(byteToString(b1));
-        sb.append(byteToString(b2));
-        byte input = (byte) Integer.parseInt(sb.toString(), 2);
-        return input;
+    private static int shiftInteger(int number) {
+        return number == 1 ? 0 : 1;
     }
 
     public static void decode() {
         File file = new File("received.txt");
         int numBytes = (int) file.length();
-        //int numOutBytes = (numBytes * 3) / 8;
         int numOutBytes = numBytes / 2;
-        byte[] data = new byte[numBytes];
+        byte[] in_data = new byte[numBytes];
         byte[] out_data = new byte[numOutBytes];
+        int decodedDataCount = 0;
+        byte bitCount = 0;
+        byte outData = 0;
 
         try (FileInputStream inputStream = new FileInputStream("received.txt")) {
-            inputStream.read(data);
+            inputStream.read(in_data);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-//        for (int i = 0; i < data.length; ++i) {
-//            data[i] = decodeBytes(data[i]);
-//            for (int j = 0; j < 3; j++) {
-//                int bitIndex = i * 3 + j;
-//                int byteIndex = bitIndex / 8;
-//                int bytePos = bitIndex % 8;
-//                int bit = getBit(data[i], j * 2);
-//                if (byteIndex < numOutBytes) {
-//                    out_data[byteIndex] = setBit(out_data[byteIndex], bit, bytePos);
-//                }
-//            }
-//        }
-
-        for (int i = 0; i < data.length; i += 2) {
-            out_data[i / 2] = decodeBytes(data[i],data[i + 1]);
+        for (final byte data : in_data) {
+            int[] bits = decodeData(data);
+            for (byte i = 0; i < 4; i++) {
+                outData = setBitAt(outData, bitCount, bits[bitCount % 4]);
+                bitCount++;
+            }
+            if (bitCount == 8) {
+                out_data[decodedDataCount++] = outData;
+                bitCount = 0;
+                outData = 0;
+            }
         }
 
         for (var i : out_data) {

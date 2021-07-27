@@ -358,12 +358,9 @@ files:
     �;\x10 p;���>>\x04��O�C|;˿\x1fOL77\x01 ��\n�7�7���"
   learner_created: true
 feedback_link: https://hyperskill.org/projects/58/stages/316/implement#comment
-status: Failed
+status: Solved
 feedback:
-  message: "Wrong answer in test #3\n\nThe decoded text must match initial text!\n\
-    \nPlease find below the output of your program during this failed test.\nNote\
-    \ that the &#39;&gt;&#39; character indicates the beginning of the input line.\n\
-    \n---\n\nWrite a mode: \n&gt; decode\n-11 -1 -1 32 -1 -1 114 -11 32 -1 -1 32 -1\
-    \ -1 101 127 -11 32 -1 114 -11 -2 -1 111 32 -14 117 -2 127 47"
-  time: Tue, 27 Jul 2021 09:16:33 UTC
+  message: Well done! You've finished the project. Select a new project on <a href="https://hyperskill.org/projects">JetBrains
+    Academy</a> to continue learning.
+  time: Tue, 27 Jul 2021 10:59:47 UTC
 record: -1
